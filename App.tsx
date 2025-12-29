@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Taskbar from './components/Taskbar';
@@ -66,10 +65,9 @@ const App: React.FC = () => {
 
   const [focusMode, setFocusMode] = useState<boolean>(localStorage.getItem('mechdyane_focus') === 'true');
   
-  // DEFAULT MODE: Neural Stream (API Enabled)
   const [isApiEnabled, setIsApiEnabled] = useState(() => {
     const saved = localStorage.getItem('mechdyane_api_enabled');
-    return saved !== 'false'; // Defaults to true
+    return saved !== 'false'; 
   });
   
   const [synapticPulse, setSynapticPulse] = useState<number>(Number(localStorage.getItem('mechdyane_pulse')) || 1);
@@ -89,6 +87,7 @@ const App: React.FC = () => {
   const [lessonScore, setLessonScore] = useState(0);
   const [quizSelection, setQuizSelection] = useState<string | null>(null);
   const [quizFeedback, setQuizFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState<string>('SYNCHRONIZING');
 
   const activeLearningModule = useMemo(() => 
     modules.find(m => m.id === activeLearningModuleId),
@@ -104,7 +103,7 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('mechdyane_focus', String(focusMode)); }, [focusMode]);
   useEffect(() => { localStorage.setItem('mechdyane_api_enabled', String(isApiEnabled)); }, [isApiEnabled]);
 
-  // --- SMART SIDEBAR OBSERVER ---
+  // --- SMART SIDEBAR ---
   useEffect(() => {
     const allWindows = Object.values(windows) as WindowState[];
     const openWindows = allWindows.filter(w => w.isOpen);
@@ -129,7 +128,6 @@ const App: React.FC = () => {
   const processPointGain = (xpGain: number, creditGain: number) => {
     triggerRewardToast(`+${xpGain}`, 'xp');
     triggerRewardToast(`+${creditGain}`, 'credits');
-
     setUser(prev => {
       const nextTotalXp = prev.xp + xpGain;
       return { ...prev, xp: nextTotalXp, credits: prev.credits + creditGain, level: Math.floor(nextTotalXp / 1000) + 1 };
@@ -188,6 +186,7 @@ const App: React.FC = () => {
 
   const loadLessonContent = async (mod: LearningModule) => {
     setLearningStep('loading');
+    setLoadingStatus('SYNCHRONIZING');
     setCurrentQuizIndex(0);
     setLessonScore(0);
     setQuizSelection(null);
@@ -206,21 +205,21 @@ const App: React.FC = () => {
       setDynamicMilestone(dynamicData);
       setLearningStep('lesson');
     } catch (e) {
-      // Automatic fallback on failure
-      const localMilestone = mod.milestones[mod.lessonsFinished] || mod.milestones[0];
-      setDynamicMilestone(localMilestone);
-      setLearningStep('lesson');
+      setLoadingStatus('DESYNC');
+      triggerRewardToast('Neural Desync', 'error');
     }
   };
 
   const handleForceLocalSync = () => {
-    // Manually force disable API and jump to local content
     setIsApiEnabled(false);
-    if (activeLearningModule) {
-      const localMilestone = activeLearningModule.milestones[activeLearningModule.lessonsFinished] || activeLearningModule.milestones[0];
-      setDynamicMilestone(localMilestone);
-      setLearningStep('lesson');
-    }
+    setLoadingStatus('ARCHIVING');
+    setTimeout(() => {
+      if (activeLearningModule) {
+        const localMilestone = activeLearningModule.milestones[activeLearningModule.lessonsFinished] || activeLearningModule.milestones[0];
+        setDynamicMilestone(localMilestone);
+        setLearningStep('lesson');
+      }
+    }, 800);
   };
 
   const handleCheckAnswer = () => {
@@ -241,7 +240,7 @@ const App: React.FC = () => {
           processPointGain(150, 50); 
           setLearningStep('result');
         }
-      }, 800);
+      }, 1000);
     } else {
       setQuizFeedback('incorrect');
       setTimeout(() => {
@@ -266,7 +265,7 @@ const App: React.FC = () => {
             return win.isOpen && (
               <Window key={win.id} {...win} isActive={activeApp === win.id} onClose={() => closeApp(win.id)} onFocus={() => focusApp(win.id)} onMinimize={() => setWindows(p => ({...p, [win.id]: {...p[win.id], isMinimized: true}}))} onMaximize={() => setWindows(p => ({...p, [win.id]: {...p[win.id], isMaximized: !p[win.id].isMaximized}}))}>
                 {mod ? (
-                  <LearningEngineOverlay user={user} module={mod} milestone={dynamicMilestone} step={learningStep} currentQuizIndex={currentQuizIndex} currentScore={lessonScore} onClose={() => closeApp(win.id)} onNextStep={() => setLearningStep('quiz')} onQuizSelect={setQuizSelection} onCheckAnswer={handleCheckAnswer} onNextLesson={() => loadLessonContent(mod)} onResultClose={() => closeApp(mod.id)} selectedAnswer={quizSelection} feedback={quizFeedback} onForceLocalSync={handleForceLocalSync} isApiEnabled={isApiEnabled} />
+                  <LearningEngineOverlay user={user} module={mod} milestone={dynamicMilestone} step={learningStep} currentQuizIndex={currentQuizIndex} currentScore={lessonScore} onClose={() => closeApp(win.id)} onNextStep={() => setLearningStep('quiz')} onQuizSelect={setQuizSelection} onCheckAnswer={handleCheckAnswer} onNextLesson={() => loadLessonContent(mod)} onResultClose={() => closeApp(mod.id)} selectedAnswer={quizSelection} feedback={quizFeedback} onForceLocalSync={handleForceLocalSync} isApiEnabled={isApiEnabled} loadingStatus={loadingStatus} />
                 ) : (
                   <>
                     {win.id === 'dashboard' && <Dashboard user={user} modules={modules} inventory={inventory} onLaunchQuest={(id) => openApp(id)} onEnroll={(id) => setModules(m => m.map(item => item.id === id ? {...item, isEnrolled: true} : item))} onMinimize={() => setWindows(prev => ({...prev, dashboard: {...prev.dashboard, isMinimized: true}}))} isApiEnabled={isApiEnabled} yielded={win.isMinimized} />}
@@ -321,86 +320,126 @@ const App: React.FC = () => {
   );
 };
 
-const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, currentQuizIndex, currentScore, onClose, onNextStep, onQuizSelect, onCheckAnswer, onNextLesson, onResultClose, selectedAnswer, feedback, onForceLocalSync, isApiEnabled }) => {
+const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, currentQuizIndex, currentScore, onClose, onNextStep, onQuizSelect, onCheckAnswer, onNextLesson, onResultClose, selectedAnswer, feedback, onForceLocalSync, isApiEnabled, loadingStatus }) => {
   if (step === 'loading') return (
-    <div className="h-full flex flex-col items-center justify-center p-8 bg-[#020617] text-center select-none animate-in fade-in duration-700 relative overflow-hidden">
-      <div className="absolute inset-0 os-grid opacity-[0.05] pointer-events-none"></div>
+    <div className="h-full w-full flex flex-col items-center justify-center p-4 md:p-8 bg-[#020617] text-center select-none animate-in fade-in duration-1000 relative overflow-hidden">
+      <div className="absolute inset-0 os-grid opacity-[0.08] pointer-events-none"></div>
+      <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[140px] opacity-10 transition-all duration-1000 ${loadingStatus === 'DESYNC' ? 'bg-amber-600' : 'bg-blue-600'}`}></div>
 
-      {/* Neural Core Icon - Assembly High-Fidelity HUD */}
-      <div className="relative mb-14">
-        <div className="w-32 h-32 rounded-full border border-blue-500/10 flex items-center justify-center relative">
-          <div className="absolute inset-0 rounded-full bg-blue-500/10 animate-pulse"></div>
-          <i className="fas fa-brain text-5xl text-blue-500 relative z-10 drop-shadow-[0_0_20px_rgba(59,130,246,0.6)]"></i>
-          <div className="absolute inset-[-12px] rounded-full border-t-2 border-l-2 border-blue-500/80 animate-[spin_2s_linear_infinite]"></div>
-          <div className="absolute inset-[-24px] rounded-full border-b-2 border-r-2 border-blue-500/20 animate-[spin_4s_linear_reverse_infinite]"></div>
-          <div className="absolute inset-[-40px] rounded-full border border-blue-500/5 flex items-center justify-center">
-            <div className="w-1 h-full bg-gradient-to-b from-transparent via-blue-500/40 to-transparent animate-[spin_6s_linear_infinite]"></div>
+      <div className="relative mb-8 md:mb-12 scale-75 md:scale-90 transition-transform duration-1000">
+        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-white/5 flex items-center justify-center relative">
+          <div className={`absolute inset-0 rounded-full transition-all duration-1000 ${loadingStatus === 'DESYNC' ? 'bg-amber-500/10 animate-pulse' : 'bg-blue-500/15 animate-pulse'}`}></div>
+          <i className={`fas fa-brain text-4xl md:text-5xl relative z-10 transition-all duration-700 drop-shadow-[0_0_20px_rgba(59,130,246,0.8)] ${loadingStatus === 'DESYNC' ? 'text-amber-500' : 'text-blue-500'}`}></i>
+          <div className="absolute inset-[-12px] md:inset-[-15px] rounded-full border-t-2 border-l-2 border-blue-500/80 animate-[spin_2.5s_linear_infinite]"></div>
+          <div className="absolute inset-[-24px] md:inset-[-30px] rounded-full border-b-2 border-r-2 border-blue-500/20 animate-[spin_6s_linear_reverse_infinite]"></div>
+        </div>
+      </div>
+      
+      <div className="space-y-4 mb-10 md:mb-16 relative z-10">
+        <h2 className="text-3xl md:text-5xl xl:text-6xl font-black text-white font-orbitron tracking-[0.3em] uppercase leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">Synthesis Protocol</h2>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-4">
+             <div className={`w-1.5 h-1.5 rounded-full ${loadingStatus === 'DESYNC' ? 'bg-amber-500 animate-ping' : 'bg-blue-400 animate-pulse'}`}></div>
+             <p className={`text-[9px] md:text-xs font-black font-mono tracking-[0.4em] uppercase transition-colors ${loadingStatus === 'DESYNC' ? 'text-amber-500' : 'text-blue-400'}`}>
+                {loadingStatus === 'SYNCHRONIZING' ? 'Assembling Neural Layers' : loadingStatus === 'DESYNC' ? 'Link Failure: Re-Routing required' : 'Extracting Static Assets'}
+             </p>
           </div>
+          <div className="w-48 md:w-64 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent mt-2"></div>
         </div>
       </div>
       
-      {/* Assembly HUD Headers */}
-      <div className="space-y-5 mb-14 relative z-10">
-        <h2 className="text-4xl md:text-6xl font-black text-white font-orbitron tracking-[0.2em] uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-          Synthesis Protocol
-        </h2>
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-[10px] md:text-xs font-black text-blue-400 font-mono tracking-[0.4em] uppercase">
-            Curriculum Assembly Active
-          </p>
-          <div className="w-40 h-[1px] bg-gradient-to-r from-transparent via-blue-500/40 to-transparent mt-2"></div>
-        </div>
-      </div>
-      
-      {/* Progress Bar HUD */}
-      <div className="w-full max-w-xl space-y-8 relative z-10">
-        <div className="w-full h-[3px] bg-white/5 rounded-full overflow-hidden relative">
+      <div className="w-full max-w-xl space-y-8 relative z-10 px-6">
+        <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/30 to-transparent animate-[shimmer_2.5s_infinite]"></div>
-          <div className="h-full bg-blue-500 w-full shadow-[0_0_20px_rgba(59,130,246,1)]"></div>
+          <div className={`h-full transition-all duration-1000 ${loadingStatus === 'DESYNC' ? 'bg-amber-600 w-1/4' : 'bg-blue-600 w-full'} shadow-[0_0_15px_rgba(59,130,246,0.6)]`}></div>
         </div>
-        
-        {/* Status Indicators */}
-        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] font-mono px-4">
-          <div className="flex items-center gap-3">
-            <span className="opacity-50">Integration:</span>
-            <span className="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]">100.00% COMPLETE</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] font-mono px-4">
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <span className="opacity-40">Integration:</span>
+            <span className={loadingStatus === 'DESYNC' ? 'text-amber-500' : 'text-emerald-400'}>{loadingStatus === 'DESYNC' ? 'HOLDING' : '100% SYNC'}</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="opacity-50">Link:</span>
-            <span className={isApiEnabled ? "text-blue-400" : "text-amber-500"}>
-              {isApiEnabled ? "REAL-TIME SYNC" : "LOCAL ARCHIVE"}
+          <div className="flex flex-col items-center gap-1 hidden md:flex">
+             <span className="opacity-40">Frequency:</span>
+             <span className="text-white">942.8 MHz</span>
+          </div>
+          <div className="flex flex-col items-center md:items-end gap-1">
+            <span className="opacity-40">Link:</span>
+            <span className={loadingStatus === 'DESYNC' ? 'text-red-500 animate-pulse' : (isApiEnabled ? "text-blue-400" : "text-amber-500")}>
+              {loadingStatus === 'DESYNC' ? 'DESYNC' : (isApiEnabled ? "LIVE" : "ARCHIVE")}
             </span>
           </div>
         </div>
       </div>
       
-      {/* Interrupt Button - Forced disabling of API */}
-      <div className="mt-20 w-full max-w-md relative z-10">
-        <button 
-          onClick={onForceLocalSync}
-          className="w-full py-5 bg-[#0a0f1e]/80 hover:bg-[#1e293b] border border-white/10 text-[11px] font-black text-blue-400 hover:text-white uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95 shadow-[0_30px_60px_rgba(0,0,0,0.6)] backdrop-blur-md font-orbitron group"
-        >
-          <span className="group-hover:tracking-[0.4em] transition-all">Interrupt & Force Local Sync</span>
+      <div className="mt-12 md:mt-20 w-full max-w-md relative z-10 px-4">
+        <button onClick={onForceLocalSync} className={`w-full py-4 md:py-5 bg-[#0a0f1e]/90 hover:bg-[#111827] border text-[10px] md:text-xs font-black uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-[0.98] shadow-2xl backdrop-blur-xl group font-orbitron ${loadingStatus === 'DESYNC' ? 'border-amber-500/40 text-amber-500 ring-1 ring-amber-500/10' : 'border-white/10 text-blue-400/80 hover:text-white'}`}>
+          <span className="group-hover:tracking-[0.4em] transition-all duration-500">Interrupt & Force Sync</span>
         </button>
       </div>
     </div>
   );
   
   if (step === 'lesson') return (
-    <div className="h-full flex flex-col bg-[#020617]/60 overflow-y-auto p-4 md:p-12 space-y-6 md:space-y-10">
-      <header className="space-y-4">
-        <div className="flex items-center gap-3">
-          <span className="px-3 py-1 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-full text-[7px] md:text-[8px] font-black uppercase font-orbitron tracking-widest">Layer {module.lessonsFinished + 1} / 12</span>
-          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+    <div className="h-full flex flex-col bg-[#020617]/80 overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-1000 relative">
+      <div className="absolute inset-0 os-grid opacity-[0.03] pointer-events-none"></div>
+      
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 lg:p-12 space-y-8 md:space-y-12">
+        <header className="space-y-6 max-w-4xl mx-auto w-full">
+          <div className="flex items-center gap-4">
+            <span className="px-5 py-1.5 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-full text-[9px] md:text-[10px] font-black uppercase font-orbitron tracking-[0.3em]">Neural Layer {module.lessonsFinished + 1} / 12</span>
+            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_rgba(59,130,246,1)]"></div>
+          </div>
+          <div className="space-y-3">
+             <h1 className="text-3xl md:text-5xl xl:text-6xl font-black text-white font-orbitron uppercase tracking-tighter leading-[1.1] drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">{milestone?.title}</h1>
+             <div className="w-full h-px bg-gradient-to-r from-blue-500 via-white/10 to-transparent"></div>
+          </div>
+        </header>
+
+        <div className="relative z-10 max-w-4xl mx-auto w-full space-y-10">
+          <div className="bg-slate-900/60 backdrop-blur-xl p-6 md:p-12 rounded-[2rem] border border-white/5 text-slate-300 text-base md:text-lg xl:text-xl leading-[1.8] whitespace-pre-wrap font-medium shadow-2xl relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-6 opacity-5 text-6xl md:text-[10rem] transition-transform duration-[3s] group-hover:scale-110">
+                <i className="fas fa-microchip"></i>
+             </div>
+             <div className="relative z-10">
+               <div className="text-blue-400/30 text-[9px] md:text-xs font-black uppercase tracking-[0.4em] mb-8 font-mono border-b border-white/5 pb-4 flex items-center gap-3">
+                  <i className="fas fa-terminal"></i>
+                  Decrypted Synaptic Content
+               </div>
+               {milestone?.content}
+             </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+             <div className="bg-blue-600/5 border border-blue-500/10 p-6 rounded-[2rem] flex items-center gap-6 group hover:border-blue-500/30 transition-all">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl shadow-lg group-hover:scale-110 transition-transform">
+                   <i className="fas fa-dna"></i>
+                </div>
+                <div>
+                   <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest font-orbitron">Knowledge Base</p>
+                   <p className="text-xs text-slate-400 font-medium leading-relaxed">Synthesis derived from Gemini-3 Core.</p>
+                </div>
+             </div>
+             <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex items-center gap-6">
+                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 text-xl">
+                   <i className="fas fa-shield-halved"></i>
+                </div>
+                <div>
+                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest font-orbitron">Neural Integrity</p>
+                   <p className="text-xs text-slate-400 font-medium leading-relaxed">Logic sequence verified for current Phase.</p>
+                </div>
+             </div>
+          </div>
         </div>
-        <h1 className="text-2xl md:text-5xl font-black text-white font-orbitron uppercase tracking-tighter leading-tight">{milestone?.title}</h1>
-      </header>
-      <div className="bg-slate-900/60 p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-white/5 text-slate-300 text-sm md:text-lg leading-relaxed whitespace-pre-wrap font-medium">
-        {milestone?.content}
       </div>
-      <div className="p-4 md:p-10 bg-slate-900/80 border-t border-white/10 flex flex-col md:flex-row justify-end gap-3 md:gap-6 mt-auto">
-        <button onClick={onClose} className="w-full md:w-auto px-6 md:px-10 py-3 md:py-4 bg-white/5 text-slate-500 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] uppercase font-black tracking-widest">Abort Link</button>
-        <button onClick={onNextStep} className="w-full md:w-auto px-8 md:px-16 py-4 md:py-5 bg-blue-600 text-white rounded-xl md:rounded-2xl text-[10px] md:text-[11px] uppercase font-black tracking-widest shadow-2xl font-orbitron">Initiate Mastery</button>
+
+      {/* Sticky Action Footer - Fixed height for consistency */}
+      <div className="h-24 md:h-28 bg-slate-900/90 backdrop-blur-3xl border-t border-white/10 flex items-center justify-end px-6 md:px-12 lg:px-24 gap-4 md:gap-6 z-[100] shadow-[0_-20px_60px_rgba(0,0,0,0.8)] shrink-0">
+        <button onClick={onClose} className="px-6 md:px-10 py-3 md:py-4 bg-white/5 text-slate-500 rounded-xl md:rounded-2xl text-[10px] md:text-xs uppercase font-black tracking-widest hover:bg-white/10 hover:text-white transition-all">Abort Link</button>
+        <button onClick={onNextStep} className="px-10 md:px-20 py-4 md:py-5 bg-blue-600 text-white rounded-xl md:rounded-2xl text-[11px] md:text-sm uppercase font-black tracking-[0.25em] shadow-xl font-orbitron hover:bg-blue-500 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+           <span>Initiate Mastery</span>
+           <i className="fas fa-chevron-right text-[10px] opacity-40"></i>
+        </button>
       </div>
     </div>
   );
@@ -409,46 +448,55 @@ const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, c
     const q = milestone?.quizzes?.[currentQuizIndex];
     if (!q) return null;
     return (
-      <div className="h-full flex flex-col items-center justify-center p-4 md:p-8 space-y-6 md:space-y-10 overflow-y-auto custom-scrollbar">
-        <header className="text-center px-4 max-w-4xl">
-          <p className="text-[10px] md:text-[11px] font-black text-blue-500 uppercase tracking-[0.4em] md:tracking-[0.5em] mb-2 md:mb-4 font-orbitron">Verification Step {currentQuizIndex + 1}/5</p>
-          <h2 className="text-lg md:text-3xl font-black text-white font-orbitron uppercase leading-snug md:leading-tight text-center tracking-tight drop-shadow-lg">{q.question}</h2>
+      <div className="h-full flex flex-col items-center justify-center p-4 md:p-10 xl:p-14 space-y-10 md:space-y-14 overflow-y-auto custom-scrollbar animate-in fade-in duration-700 relative bg-[#020617]/90">
+        <div className="absolute inset-0 os-grid opacity-[0.03] pointer-events-none"></div>
+        
+        <header className="text-center px-4 max-w-4xl relative z-10 space-y-4">
+          <div className="flex flex-col items-center gap-3">
+             <p className="text-[10px] md:text-xs font-black text-blue-500 uppercase tracking-[0.4em] md:tracking-[0.6em] font-orbitron flex items-center gap-3">
+                <i className="fas fa-crosshairs text-[10px] animate-pulse"></i>
+                Verification Gate {currentQuizIndex + 1}/5
+             </p>
+             <div className="flex gap-2">
+                {[0, 1, 2, 3, 4].map(idx => (
+                   <div key={idx} className={`w-3 md:w-8 h-1 rounded-full transition-all duration-700 ${idx === currentQuizIndex ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,1)]' : idx < currentQuizIndex ? 'bg-emerald-500/40' : 'bg-white/10'}`}></div>
+                ))}
+             </div>
+          </div>
+          <h2 className="text-2xl md:text-4xl xl:text-5xl font-black text-white font-orbitron uppercase leading-[1.2] text-center tracking-tight drop-shadow-2xl">{q.question}</h2>
         </header>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5 w-full max-w-5xl px-4">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full max-w-5xl px-4 relative z-10">
           {q.options.map((opt: any) => (
-            <button 
-              key={opt.letter} 
-              onClick={() => onQuizSelect(opt.letter)} 
-              className={`p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border transition-all text-left flex items-center gap-4 md:gap-8 relative overflow-hidden group/opt ${
-                selectedAnswer === opt.letter 
-                  ? 'bg-blue-600/20 border-blue-500 text-white shadow-[0_0_40px_rgba(59,130,246,0.15)] ring-2 ring-blue-500/50' 
-                  : 'bg-slate-900/60 border-white/10 text-slate-400 hover:border-white/30 hover:bg-slate-900/80 hover:scale-[1.01]'
-              }`}
-            >
-              <div className={`w-10 h-10 md:w-14 md:h-14 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center font-black font-orbitron text-base md:text-xl shrink-0 transition-colors ${
-                selectedAnswer === opt.letter ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-600 group-hover/opt:text-blue-400'
-              }`}>
+            <button key={opt.letter} onClick={() => !feedback && onQuizSelect(opt.letter)} className={`group/opt p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border transition-all duration-500 text-left flex items-center gap-6 md:gap-10 relative overflow-hidden ${selectedAnswer === opt.letter ? 'bg-blue-600/20 border-blue-500 text-white shadow-[0_0_40px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/50' : 'bg-slate-900/60 border-white/5 text-slate-400 hover:border-white/20 hover:bg-slate-900/80 hover:scale-[1.01]'}`}>
+              {selectedAnswer === opt.letter && (
+                <>
+                  <div className="absolute top-4 left-4 w-3 h-3 border-t-2 border-l-2 border-blue-500 opacity-60"></div>
+                  <div className="absolute top-4 right-4 w-3 h-3 border-t-2 border-r-2 border-blue-500 opacity-60"></div>
+                  <div className="absolute bottom-4 left-4 w-3 h-3 border-b-2 border-l-2 border-blue-500 opacity-60"></div>
+                  <div className="absolute bottom-4 right-4 w-3 h-3 border-b-2 border-r-2 border-blue-500 opacity-60"></div>
+                </>
+              )}
+              
+              <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center font-black font-orbitron text-lg md:text-2xl shrink-0 transition-all duration-700 ${selectedAnswer === opt.letter ? 'bg-blue-600 text-white shadow-xl' : 'bg-white/5 text-slate-600 group-hover/opt:text-blue-400'}`}>
                 {opt.letter}
               </div>
-              <span className={`font-bold text-xs md:text-lg leading-snug transition-colors ${
-                selectedAnswer === opt.letter ? 'text-white' : 'group-hover/opt:text-slate-200'
-              }`}>{opt.text}</span>
+              <span className={`font-bold text-sm md:text-lg xl:text-xl leading-snug transition-colors duration-500 ${selectedAnswer === opt.letter ? 'text-white' : 'group-hover/opt:text-slate-200'}`}>{opt.text}</span>
               
               {selectedAnswer === opt.letter && (
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 text-blue-500/30 text-2xl md:text-4xl">
-                  <i className="fas fa-check-circle"></i>
+                <div className="absolute right-8 top-1/2 -translate-y-1/2 text-blue-500/20 text-4xl md:text-6xl animate-in fade-in zoom-in-50">
+                  <i className={feedback === 'correct' ? 'fas fa-check-circle' : feedback === 'incorrect' ? 'fas fa-times-circle' : 'fas fa-bullseye'}></i>
                 </div>
               )}
             </button>
           ))}
         </div>
-        <button 
-          onClick={onCheckAnswer} 
-          disabled={!selectedAnswer || !!feedback} 
-          className="w-full max-w-xs md:max-w-sm px-10 md:px-16 py-4 md:py-6 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl md:rounded-[2.5rem] text-[10px] md:text-xs font-black uppercase tracking-[0.2em] font-orbitron disabled:opacity-20 shadow-[0_15px_40px_rgba(59,130,246,0.25)] transition-all active:scale-95 mb-6"
-        >
-          {feedback === 'correct' ? 'Link Synchronized' : feedback === 'incorrect' ? 'Retrying Link...' : 'Confirm Selection'}
-        </button>
+
+        <div className="w-full flex flex-col items-center gap-6 relative z-10 pb-12">
+          <button onClick={onCheckAnswer} disabled={!selectedAnswer || !!feedback} className={`w-full max-w-xs md:max-w-sm px-10 md:px-16 py-4 md:py-6 text-[10px] md:text-xs xl:text-sm font-black uppercase tracking-[0.3em] font-orbitron rounded-2xl md:rounded-[2rem] transition-all active:scale-95 disabled:opacity-20 shadow-2xl ${feedback === 'correct' ? 'bg-emerald-600 text-white shadow-emerald-500/20' : feedback === 'incorrect' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/30'}`}>
+            {feedback === 'correct' ? 'LINK SYNCHRONIZED' : feedback === 'incorrect' ? 'NEURAL CONFLICT' : 'VERIFY ALIGNMENT'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -456,34 +504,32 @@ const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, c
   if (step === 'result') {
     const isSuccess = currentScore >= 4;
     return (
-      <div className="h-full flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-3xl overflow-y-auto custom-scrollbar">
-        <div className="bg-[#0f172a]/90 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3.5rem] border-2 border-white/10 text-center space-y-6 md:space-y-10 max-w-lg w-full shadow-[0_0_100px_rgba(0,0,0,0.8)] relative overflow-hidden my-4">
+      <div className="h-full flex items-center justify-center p-6 bg-[#020617]/95 backdrop-blur-3xl overflow-y-auto custom-scrollbar relative">
+        <div className="absolute inset-0 os-grid opacity-[0.05] pointer-events-none"></div>
+        <div className={`bg-[#0f172a]/95 p-10 md:p-16 xl:p-20 rounded-[3rem] md:rounded-[5rem] border-2 border-white/10 text-center space-y-10 md:space-y-14 max-w-2xl w-full shadow-[0_0_150px_rgba(0,0,0,1)] relative overflow-hidden my-6`}>
           
-          {/* Neural Badge Visualization */}
-          <div className="relative group">
-            <div className={`w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] mx-auto flex items-center justify-center text-4xl md:text-6xl text-white relative transition-all duration-1000 ${isSuccess ? 'bg-gradient-to-tr from-emerald-500 to-blue-600 shadow-[0_0_40px_rgba(16,185,129,0.4)] rotate-0' : 'bg-red-600 shadow-red-500/40 rotate-12'}`}>
+          <div className="relative group scale-100 md:scale-110 transition-transform duration-1000 mb-6 md:mb-10">
+            <div className={`w-28 h-28 md:w-36 md:h-36 rounded-[2.5rem] md:rounded-[3.5rem] mx-auto flex items-center justify-center text-4xl md:text-6xl text-white relative transition-all duration-1000 shadow-[0_0_60px_rgba(0,0,0,0.5)] ${isSuccess ? 'bg-gradient-to-tr from-emerald-500 to-blue-600 shadow-[0_0_50px_rgba(16,185,129,0.5)] rotate-0' : 'bg-red-600 shadow-red-500/40 rotate-12'}`}>
               <i className={`fas ${isSuccess ? 'fa-certificate' : 'fa-skull-crossbones'} ${isSuccess ? 'animate-pulse' : ''}`}></i>
-              {isSuccess && <div className="absolute inset-0 rounded-[2.5rem] border-2 border-white/40 animate-ping"></div>}
+              {isSuccess && <div className="absolute inset-0 rounded-inherit border-4 border-white/40 animate-ping"></div>}
             </div>
             {isSuccess && (
-              <div className="mt-4 animate-in slide-in-from-bottom-4">
-                <span className="text-[9px] md:text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] font-orbitron drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">Neural Badge Decoded</span>
+              <div className="mt-6 animate-in slide-in-from-bottom-4 duration-1000">
+                <span className="text-[10px] md:text-xs font-black text-emerald-400 uppercase tracking-[0.5em] font-orbitron drop-shadow-[0_0_15px_rgba(52,211,153,0.7)]">Mastery Decompressed</span>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-2xl md:text-4xl font-black text-white font-orbitron uppercase tracking-tighter leading-none">{isSuccess ? 'Link Verified' : 'Sync Denied'}</h1>
-            <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{isSuccess ? 'Synaptic integration established successfully' : 'Incomplete neural alignment detected'}</p>
+          <div className="space-y-4 relative z-10">
+            <h1 className="text-3xl md:text-5xl xl:text-6xl font-black text-white font-orbitron uppercase tracking-tighter leading-none">{isSuccess ? 'Mastery Locked' : 'Sync Terminal'}</h1>
+            <p className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-mono">{isSuccess ? 'Neural alignment established with precision' : 'Synaptic rejection detected • Recalibrate'}</p>
           </div>
 
-          <div className="flex flex-col gap-3 md:gap-4">
-            <button onClick={isSuccess ? onNextLesson : onClose} className="w-full py-5 md:py-6 bg-blue-600 text-white rounded-2xl md:rounded-[2rem] font-black text-[10px] md:text-xs uppercase tracking-[0.2em] font-orbitron shadow-2xl transition-all hover:scale-105 active:scale-95 hover:bg-blue-500">
-              {isSuccess ? 'Advance Layer' : 'Retry Verification'}
+          <div className="flex flex-col gap-4 md:gap-6 relative z-10 pt-8">
+            <button onClick={onNextLesson} className="w-full py-5 md:py-6 bg-blue-600 text-white rounded-2xl md:rounded-[2.5rem] font-black text-[11px] md:text-sm uppercase tracking-[0.3em] font-orbitron shadow-[0_20px_50px_rgba(37,99,235,0.4)] transition-all hover:scale-[1.02] active:scale-95 hover:bg-blue-500">
+              {isSuccess ? 'Advance Protocol' : 'Initiate Re-Link'}
             </button>
-            <button onClick={onResultClose} className="text-[9px] font-black text-slate-600 hover:text-white uppercase tracking-[0.4em] transition-colors font-orbitron py-1.5">
-              TERMINATE SESSION
-            </button>
+            <button onClick={onResultClose} className="text-[9px] md:text-[10px] font-black text-slate-600 hover:text-white uppercase tracking-[0.5em] transition-colors font-orbitron py-2">DISCONNECT SESSION</button>
           </div>
         </div>
       </div>
