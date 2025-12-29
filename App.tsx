@@ -383,62 +383,62 @@ const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, c
     <div className="h-full flex flex-col bg-[#020617]/80 overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-1000 relative">
       <div className="absolute inset-0 os-grid opacity-[0.03] pointer-events-none"></div>
       
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 lg:p-12 space-y-8 md:space-y-12">
-        <header className="space-y-6 max-w-4xl mx-auto w-full">
-          <div className="flex items-center gap-4">
-            <span className="px-5 py-1.5 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-full text-[9px] md:text-[10px] font-black uppercase font-orbitron tracking-[0.3em]">Neural Layer {module.lessonsFinished + 1} / 12</span>
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_rgba(59,130,246,1)]"></div>
-          </div>
-          <div className="space-y-3">
-             <h1 className="text-3xl md:text-5xl xl:text-6xl font-black text-white font-orbitron uppercase tracking-tighter leading-[1.1] drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">{milestone?.title}</h1>
-             <div className="w-full h-px bg-gradient-to-r from-blue-500 via-white/10 to-transparent"></div>
-          </div>
-        </header>
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-8 flex flex-col justify-start md:justify-center">
+        <div className="max-w-4xl mx-auto w-full space-y-4 md:space-y-6">
+          <header className="space-y-3 md:space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="px-4 py-1 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-full text-[8px] md:text-[9px] font-black uppercase font-orbitron tracking-[0.2em]">Layer {module.lessonsFinished + 1} / 12</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,1)]"></div>
+            </div>
+            <div className="space-y-2">
+               <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-white font-orbitron uppercase tracking-tighter leading-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">{milestone?.title}</h1>
+               <div className="w-full h-px bg-gradient-to-r from-blue-500 via-white/5 to-transparent"></div>
+            </div>
+          </header>
 
-        <div className="relative z-10 max-w-4xl mx-auto w-full space-y-10">
-          <div className="bg-slate-900/60 backdrop-blur-xl p-6 md:p-12 rounded-[2rem] border border-white/5 text-slate-300 text-base md:text-lg xl:text-xl leading-[1.8] whitespace-pre-wrap font-medium shadow-2xl relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-6 opacity-5 text-6xl md:text-[10rem] transition-transform duration-[3s] group-hover:scale-110">
-                <i className="fas fa-microchip"></i>
-             </div>
-             <div className="relative z-10">
-               <div className="text-blue-400/30 text-[9px] md:text-xs font-black uppercase tracking-[0.4em] mb-8 font-mono border-b border-white/5 pb-4 flex items-center gap-3">
-                  <i className="fas fa-terminal"></i>
-                  Decrypted Synaptic Content
+          <div className="relative z-10 w-full space-y-4 md:space-y-6">
+            <div className="bg-slate-900/60 backdrop-blur-xl p-5 md:p-8 rounded-[1.5rem] border border-white/5 text-slate-300 text-xs md:text-sm lg:text-base leading-[1.7] whitespace-pre-wrap font-medium shadow-2xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-4 opacity-5 text-4xl md:text-8xl transition-transform duration-[3s] group-hover:scale-110">
+                  <i className="fas fa-microchip"></i>
                </div>
-               {milestone?.content}
-             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-             <div className="bg-blue-600/5 border border-blue-500/10 p-6 rounded-[2rem] flex items-center gap-6 group hover:border-blue-500/30 transition-all">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl shadow-lg group-hover:scale-110 transition-transform">
-                   <i className="fas fa-dna"></i>
-                </div>
-                <div>
-                   <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest font-orbitron">Knowledge Base</p>
-                   <p className="text-xs text-slate-400 font-medium leading-relaxed">Synthesis derived from Gemini-3 Core.</p>
-                </div>
-             </div>
-             <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex items-center gap-6">
-                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 text-xl">
-                   <i className="fas fa-shield-halved"></i>
-                </div>
-                <div>
-                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest font-orbitron">Neural Integrity</p>
-                   <p className="text-xs text-slate-400 font-medium leading-relaxed">Logic sequence verified for current Phase.</p>
-                </div>
-             </div>
+               <div className="relative z-10">
+                 <div className="text-blue-400/30 text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-4 md:mb-5 font-mono border-b border-white/5 pb-3 flex items-center gap-2">
+                    <i className="fas fa-terminal"></i>
+                    Decrypted Synaptic Content
+                 </div>
+                 {milestone?.content}
+               </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="bg-blue-600/5 border border-blue-500/10 p-4 rounded-[1.5rem] flex items-center gap-4 group hover:border-blue-500/30 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 text-base shadow-lg group-hover:scale-110 transition-transform">
+                     <i className="fas fa-dna"></i>
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest font-orbitron">Source</p>
+                     <p className="text-[10px] text-slate-400 font-medium leading-relaxed">Gemini-3 Neural Layer</p>
+                  </div>
+               </div>
+               <div className="bg-white/5 border border-white/10 p-4 rounded-[1.5rem] flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 text-base">
+                     <i className="fas fa-shield-halved"></i>
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest font-orbitron">Integrity</p>
+                     <p className="text-[10px] text-slate-400 font-medium leading-relaxed">Logical Verification: Pass</p>
+                  </div>
+               </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Sticky Action Footer - Fixed height for consistency */}
-      <div className="h-24 md:h-28 bg-slate-900/90 backdrop-blur-3xl border-t border-white/10 flex items-center justify-end px-6 md:px-12 lg:px-24 gap-4 md:gap-6 z-[100] shadow-[0_-20px_60px_rgba(0,0,0,0.8)] shrink-0">
-        <button onClick={onClose} className="px-6 md:px-10 py-3 md:py-4 bg-white/5 text-slate-500 rounded-xl md:rounded-2xl text-[10px] md:text-xs uppercase font-black tracking-widest hover:bg-white/10 hover:text-white transition-all">Abort Link</button>
-        <button onClick={onNextStep} className="px-10 md:px-20 py-4 md:py-5 bg-blue-600 text-white rounded-xl md:rounded-2xl text-[11px] md:text-sm uppercase font-black tracking-[0.25em] shadow-xl font-orbitron hover:bg-blue-500 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+      <div className="h-16 md:h-20 bg-slate-900/95 backdrop-blur-3xl border-t border-white/10 flex items-center justify-end px-4 md:px-12 gap-3 md:gap-4 z-[100] shadow-[0_-15px_40px_rgba(0,0,0,0.8)] shrink-0">
+        <button onClick={onClose} className="px-5 md:px-8 py-2 md:py-3 bg-white/5 text-slate-500 rounded-lg md:rounded-xl text-[8px] md:text-[9px] uppercase font-black tracking-widest hover:bg-white/10 hover:text-white transition-all">Abort Link</button>
+        <button onClick={onNextStep} className="px-8 md:px-12 py-3 md:py-4 bg-blue-600 text-white rounded-lg md:rounded-xl text-[9px] md:text-[11px] uppercase font-black tracking-[0.2em] shadow-xl font-orbitron hover:bg-blue-500 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
            <span>Initiate Mastery</span>
-           <i className="fas fa-chevron-right text-[10px] opacity-40"></i>
+           <i className="fas fa-chevron-right text-[8px] opacity-40"></i>
         </button>
       </div>
     </div>
@@ -448,43 +448,36 @@ const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, c
     const q = milestone?.quizzes?.[currentQuizIndex];
     if (!q) return null;
     return (
-      <div className="h-full flex flex-col items-center justify-center p-4 md:p-10 xl:p-14 space-y-10 md:space-y-14 overflow-y-auto custom-scrollbar animate-in fade-in duration-700 relative bg-[#020617]/90">
+      <div className="h-full flex flex-col items-center justify-start md:justify-center p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar animate-in fade-in duration-700 relative bg-[#020617]/95">
         <div className="absolute inset-0 os-grid opacity-[0.03] pointer-events-none"></div>
         
-        <header className="text-center px-4 max-w-4xl relative z-10 space-y-4">
-          <div className="flex flex-col items-center gap-3">
-             <p className="text-[10px] md:text-xs font-black text-blue-500 uppercase tracking-[0.4em] md:tracking-[0.6em] font-orbitron flex items-center gap-3">
-                <i className="fas fa-crosshairs text-[10px] animate-pulse"></i>
+        <header className="text-center px-4 max-w-4xl relative z-10 pt-2 md:pt-0">
+          <div className="flex flex-col items-center gap-2 mb-3 md:mb-5">
+             <p className="text-[8px] md:text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] font-orbitron flex items-center gap-2">
+                <i className="fas fa-crosshairs text-[7px] animate-pulse"></i>
                 Verification Gate {currentQuizIndex + 1}/5
              </p>
-             <div className="flex gap-2">
+             <div className="flex gap-1">
                 {[0, 1, 2, 3, 4].map(idx => (
-                   <div key={idx} className={`w-3 md:w-8 h-1 rounded-full transition-all duration-700 ${idx === currentQuizIndex ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,1)]' : idx < currentQuizIndex ? 'bg-emerald-500/40' : 'bg-white/10'}`}></div>
+                   <div key={idx} className={`w-2.5 md:w-5 h-0.5 rounded-full transition-all duration-700 ${idx === currentQuizIndex ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,1)]' : idx < currentQuizIndex ? 'bg-emerald-500/40' : 'bg-white/10'}`}></div>
                 ))}
              </div>
           </div>
-          <h2 className="text-2xl md:text-4xl xl:text-5xl font-black text-white font-orbitron uppercase leading-[1.2] text-center tracking-tight drop-shadow-2xl">{q.question}</h2>
+          <h2 className="text-sm md:text-lg lg:text-xl font-black text-white font-orbitron uppercase leading-snug text-center tracking-tight drop-shadow-2xl max-w-xl mx-auto px-1">
+             {q.question}
+          </h2>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full max-w-5xl px-4 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 w-full max-w-3xl px-4 relative z-10 pb-6">
           {q.options.map((opt: any) => (
-            <button key={opt.letter} onClick={() => !feedback && onQuizSelect(opt.letter)} className={`group/opt p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border transition-all duration-500 text-left flex items-center gap-6 md:gap-10 relative overflow-hidden ${selectedAnswer === opt.letter ? 'bg-blue-600/20 border-blue-500 text-white shadow-[0_0_40px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/50' : 'bg-slate-900/60 border-white/5 text-slate-400 hover:border-white/20 hover:bg-slate-900/80 hover:scale-[1.01]'}`}>
-              {selectedAnswer === opt.letter && (
-                <>
-                  <div className="absolute top-4 left-4 w-3 h-3 border-t-2 border-l-2 border-blue-500 opacity-60"></div>
-                  <div className="absolute top-4 right-4 w-3 h-3 border-t-2 border-r-2 border-blue-500 opacity-60"></div>
-                  <div className="absolute bottom-4 left-4 w-3 h-3 border-b-2 border-l-2 border-blue-500 opacity-60"></div>
-                  <div className="absolute bottom-4 right-4 w-3 h-3 border-b-2 border-r-2 border-blue-500 opacity-60"></div>
-                </>
-              )}
-              
-              <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center font-black font-orbitron text-lg md:text-2xl shrink-0 transition-all duration-700 ${selectedAnswer === opt.letter ? 'bg-blue-600 text-white shadow-xl' : 'bg-white/5 text-slate-600 group-hover/opt:text-blue-400'}`}>
+            <button key={opt.letter} onClick={() => !feedback && onQuizSelect(opt.letter)} className={`group/opt p-3 md:p-4 rounded-lg md:rounded-xl border transition-all duration-500 text-left flex items-center gap-3 md:gap-4 relative overflow-hidden ${selectedAnswer === opt.letter ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg ring-1 ring-blue-500/50' : 'bg-slate-900/60 border-white/5 text-slate-400 hover:border-white/20 hover:bg-slate-900/80'}`}>
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-md md:rounded-lg flex items-center justify-center font-black font-orbitron text-xs md:text-sm shrink-0 transition-all duration-700 ${selectedAnswer === opt.letter ? 'bg-blue-600 text-white shadow-xl' : 'bg-white/5 text-slate-600 group-hover/opt:text-blue-400'}`}>
                 {opt.letter}
               </div>
-              <span className={`font-bold text-sm md:text-lg xl:text-xl leading-snug transition-colors duration-500 ${selectedAnswer === opt.letter ? 'text-white' : 'group-hover/opt:text-slate-200'}`}>{opt.text}</span>
+              <span className={`font-bold text-[10px] md:text-xs lg:text-sm leading-snug transition-colors duration-500 ${selectedAnswer === opt.letter ? 'text-white' : 'group-hover/opt:text-slate-200'}`}>{opt.text}</span>
               
               {selectedAnswer === opt.letter && (
-                <div className="absolute right-8 top-1/2 -translate-y-1/2 text-blue-500/20 text-4xl md:text-6xl animate-in fade-in zoom-in-50">
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500/10 text-xl md:text-3xl animate-in fade-in zoom-in-50">
                   <i className={feedback === 'correct' ? 'fas fa-check-circle' : feedback === 'incorrect' ? 'fas fa-times-circle' : 'fas fa-bullseye'}></i>
                 </div>
               )}
@@ -492,9 +485,9 @@ const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, c
           ))}
         </div>
 
-        <div className="w-full flex flex-col items-center gap-6 relative z-10 pb-12">
-          <button onClick={onCheckAnswer} disabled={!selectedAnswer || !!feedback} className={`w-full max-w-xs md:max-w-sm px-10 md:px-16 py-4 md:py-6 text-[10px] md:text-xs xl:text-sm font-black uppercase tracking-[0.3em] font-orbitron rounded-2xl md:rounded-[2rem] transition-all active:scale-95 disabled:opacity-20 shadow-2xl ${feedback === 'correct' ? 'bg-emerald-600 text-white shadow-emerald-500/20' : feedback === 'incorrect' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/30'}`}>
-            {feedback === 'correct' ? 'LINK SYNCHRONIZED' : feedback === 'incorrect' ? 'NEURAL CONFLICT' : 'VERIFY ALIGNMENT'}
+        <div className="w-full flex flex-col items-center gap-3 relative z-10 pb-10">
+          <button onClick={onCheckAnswer} disabled={!selectedAnswer || !!feedback} className={`w-full max-w-[160px] md:max-w-[200px] px-6 md:px-8 py-3 md:py-3.5 text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] font-orbitron rounded-lg transition-all active:scale-95 disabled:opacity-20 shadow-xl ${feedback === 'correct' ? 'bg-emerald-600 text-white' : feedback === 'incorrect' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/20'}`}>
+            {feedback === 'correct' ? 'SYNCHRONIZED' : feedback === 'incorrect' ? 'CONFLICT' : 'VERIFY LINK'}
           </button>
         </div>
       </div>
@@ -504,32 +497,27 @@ const LearningEngineOverlay: React.FC<any> = ({ user, module, milestone, step, c
   if (step === 'result') {
     const isSuccess = currentScore >= 4;
     return (
-      <div className="h-full flex items-center justify-center p-6 bg-[#020617]/95 backdrop-blur-3xl overflow-y-auto custom-scrollbar relative">
+      <div className="h-full flex items-center justify-center p-6 bg-[#020617]/98 backdrop-blur-3xl overflow-y-auto custom-scrollbar relative">
         <div className="absolute inset-0 os-grid opacity-[0.05] pointer-events-none"></div>
-        <div className={`bg-[#0f172a]/95 p-10 md:p-16 xl:p-20 rounded-[3rem] md:rounded-[5rem] border-2 border-white/10 text-center space-y-10 md:space-y-14 max-w-2xl w-full shadow-[0_0_150px_rgba(0,0,0,1)] relative overflow-hidden my-6`}>
+        <div className={`bg-[#0f172a]/95 p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] border border-white/10 text-center space-y-6 md:space-y-10 max-w-md w-full shadow-[0_0_100px_rgba(0,0,0,1)] relative overflow-hidden my-6`}>
           
-          <div className="relative group scale-100 md:scale-110 transition-transform duration-1000 mb-6 md:mb-10">
-            <div className={`w-28 h-28 md:w-36 md:h-36 rounded-[2.5rem] md:rounded-[3.5rem] mx-auto flex items-center justify-center text-4xl md:text-6xl text-white relative transition-all duration-1000 shadow-[0_0_60px_rgba(0,0,0,0.5)] ${isSuccess ? 'bg-gradient-to-tr from-emerald-500 to-blue-600 shadow-[0_0_50px_rgba(16,185,129,0.5)] rotate-0' : 'bg-red-600 shadow-red-500/40 rotate-12'}`}>
-              <i className={`fas ${isSuccess ? 'fa-certificate' : 'fa-skull-crossbones'} ${isSuccess ? 'animate-pulse' : ''}`}></i>
-              {isSuccess && <div className="absolute inset-0 rounded-inherit border-4 border-white/40 animate-ping"></div>}
+          <div className="relative group transition-transform duration-1000">
+            <div className={`w-16 h-16 md:w-20 md:h-20 rounded-[1.2rem] md:rounded-[1.5rem] mx-auto flex items-center justify-center text-2xl md:text-3xl text-white relative transition-all duration-1000 shadow-[0_0_40px_rgba(0,0,0,0.5)] ${isSuccess ? 'bg-gradient-to-tr from-emerald-500 to-blue-600 shadow-[0_0_30px_rgba(16,185,129,0.5)]' : 'bg-red-600 shadow-red-500/30'}`}>
+              <i className={`fas ${isSuccess ? 'fa-certificate' : 'fa-skull-crossbones'}`}></i>
+              {isSuccess && <div className="absolute inset-0 rounded-inherit border-2 border-white/40 animate-ping"></div>}
             </div>
-            {isSuccess && (
-              <div className="mt-6 animate-in slide-in-from-bottom-4 duration-1000">
-                <span className="text-[10px] md:text-xs font-black text-emerald-400 uppercase tracking-[0.5em] font-orbitron drop-shadow-[0_0_15px_rgba(52,211,153,0.7)]">Mastery Decompressed</span>
-              </div>
-            )}
           </div>
 
-          <div className="space-y-4 relative z-10">
-            <h1 className="text-3xl md:text-5xl xl:text-6xl font-black text-white font-orbitron uppercase tracking-tighter leading-none">{isSuccess ? 'Mastery Locked' : 'Sync Terminal'}</h1>
-            <p className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-mono">{isSuccess ? 'Neural alignment established with precision' : 'Synaptic rejection detected • Recalibrate'}</p>
+          <div className="space-y-2 relative z-10">
+            <h1 className="text-xl md:text-3xl font-black text-white font-orbitron uppercase tracking-tighter leading-none">{isSuccess ? 'Mastery Locked' : 'Terminal Reject'}</h1>
+            <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] font-mono">{isSuccess ? 'Neural alignment achieved' : 'Link failure • Recalibrate'}</p>
           </div>
 
-          <div className="flex flex-col gap-4 md:gap-6 relative z-10 pt-8">
-            <button onClick={onNextLesson} className="w-full py-5 md:py-6 bg-blue-600 text-white rounded-2xl md:rounded-[2.5rem] font-black text-[11px] md:text-sm uppercase tracking-[0.3em] font-orbitron shadow-[0_20px_50px_rgba(37,99,235,0.4)] transition-all hover:scale-[1.02] active:scale-95 hover:bg-blue-500">
-              {isSuccess ? 'Advance Protocol' : 'Initiate Re-Link'}
+          <div className="flex flex-col gap-3 md:gap-4 relative z-10">
+            <button onClick={onNextLesson} className="w-full py-4 md:py-5 bg-blue-600 text-white rounded-xl font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] font-orbitron shadow-xl transition-all hover:scale-[1.02] active:scale-95 hover:bg-blue-500">
+              {isSuccess ? 'Continue Link' : 'Retry Node'}
             </button>
-            <button onClick={onResultClose} className="text-[9px] md:text-[10px] font-black text-slate-600 hover:text-white uppercase tracking-[0.5em] transition-colors font-orbitron py-2">DISCONNECT SESSION</button>
+            <button onClick={onResultClose} className="text-[8px] md:text-[9px] font-black text-slate-600 hover:text-white uppercase tracking-[0.4em] transition-colors font-orbitron py-1.5">DISCONNECT</button>
           </div>
         </div>
       </div>
